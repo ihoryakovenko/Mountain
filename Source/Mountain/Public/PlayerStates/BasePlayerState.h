@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
-#include "AbilitySystemInterface.h"
 #include "GameplayEffectTypes.h"
 
 #include "BasePlayerState.generated.h"
@@ -10,14 +9,12 @@
 DECLARE_LOG_CATEGORY_EXTERN(BasePlayerStateLog, Log, All);
 
 UCLASS()
-class MOUNTAIN_API ABasePlayerState : public APlayerState, public IAbilitySystemInterface
+class MOUNTAIN_API ABasePlayerState : public APlayerState
 {
 	GENERATED_BODY()
 	
 public:
 	ABasePlayerState();
-
-	UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void ShowAbilityConfirmCancelText(bool ShowText);

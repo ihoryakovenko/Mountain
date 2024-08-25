@@ -12,10 +12,14 @@
 
 #include "GAS/BaseGameplayAbility.h"
 #include "GAS/BaseAttributeSet.h"
+#include "PlayerStates/BasePlayerState.h"
 
 AMountainCharacter::AMountainCharacter(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer.SetDefaultSubobjectClass<UCharacterMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0, 0.0, 640.0);
+
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
@@ -72,6 +76,11 @@ int32 AMountainCharacter::GetLevel() const
 	return 0;
 }
 
+bool AMountainCharacter::IsAlive() const
+{
+	return AttributeSetBase.IsValid() && AttributeSetBase->GetHealth() > 0.0f;
+}
+
 void AMountainCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
@@ -94,7 +103,13 @@ void AMountainCharacter::Die()
 		EffectTagsToRemove.AddTag(EffectRemoveOnDeathTag);
 		int32 NumEffectsRemoved = AbilitySystemComponent->RemoveActiveEffectsWithTags(EffectTagsToRemove);
 
-		AbilitySystemComponent->AddLooseGameplayTag(DeadTag);
+		// TODO: Check
+		if (GetLocalRole() == ROLE_Authority)
+		{
+			FGameplayEffectSpecHandle NewHandle = AbilitySystemComponent->MakeOutgoingSpec(OnDeathEffect, GetLevel(), EffectContext);
+			ensureAlways(NewHandle.IsValid());
+			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*NewHandle.Data.Get(), AbilitySystemComponent.Get());
+		}
 	}
 
 	OnCharacterDied.Broadcast(this);
@@ -104,7 +119,7 @@ void AMountainCharacter::Die()
 
 void AMountainCharacter::FinishDying()
 {
-	Destroy();
+	//Destroy();
 }
 
 void AMountainCharacter::AddCharacterAbilities()
@@ -141,7 +156,7 @@ void AMountainCharacter::InitializeAttributes()
 	}
 
 	// Can run on Server and Client
-	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+	EffectContext = AbilitySystemComponent->MakeEffectContext();
 	EffectContext.AddSourceObject(this);
 
 	FGameplayEffectSpecHandle NewHandle = AbilitySystemComponent->MakeOutgoingSpec(DefaultAttributes, GetLevel(), EffectContext);
@@ -162,17 +177,100 @@ void AMountainCharacter::AddStartupEffects()
 		return;
 	}
 
-	FGameplayEffectContextHandle EffectContext = AbilitySystemComponent->MakeEffectContext();
+	EffectContext = AbilitySystemComponent->MakeEffectContext();
 	EffectContext.AddSourceObject(this);
 
 	for (TSubclassOf<UGameplayEffect> GameplayEffect : StartupEffects)
 	{
 		FGameplayEffectSpecHandle NewHandle = AbilitySystemComponent->MakeOutgoingSpec(GameplayEffect, GetLevel(), EffectContext);
-		if (NewHandle.IsValid())
-		{
-			FActiveGameplayEffectHandle ActiveGEHandle = AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*NewHandle.Data.Get(), AbilitySystemComponent.Get());
-		}
+		ensureAlways(NewHandle.IsValid());
+		AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*NewHandle.Data.Get(), AbilitySystemComponent.Get());
 	}
 
 	AbilitySystemComponent->bStartupEffectsApplied = true;
+}
+
+void AMountainCharacter::BindASCInput()
+{
+	if (!ASCInputBound && AbilitySystemComponent.IsValid() && IsValid(InputComponent))
+	{
+		// TODO: Check path
+		FTopLevelAssetPath AbilityEnumAssetPath(FName("/Script/Mountain"), FName("EAbilityInputID"));
+		//ensureAlways(AbilityEnumAssetPath.IsValid()); Bullshit checks only PackageName.IsNone() Unreal crashes if asset is not valid
+
+		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, FGameplayAbilityInputBinds(FString("ConfirmTarget"),
+			FString("CancelTarget"), AbilityEnumAssetPath, static_cast<int32>(EAbilityInputID::Confirm), static_cast<int32>(EAbilityInputID::Cancel)));
+
+		ASCInputBound = true;
+	}
+}
+
+void AMountainCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
+	if (PS)
+	{
+		// Set the ASC on the Server. Clients do this in OnRep_PlayerState()
+		AbilitySystemComponent = PS->AbilitySystemComponent;
+		AttributeSetBase = PS->AttributeSetBase;
+
+		// TODO: Need only for AI if it will be controll this Character FIX
+		// AI won't have PlayerControllers so we can init again here just to be sure
+		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+
+		// If we handle players disconnecting and rejoining in the future, we'll have to change this so that possession from rejoining doesn't reset attributes.
+		// For now assume possession = spawn/respawn.
+		InitializeAttributes();
+
+		// Respawn specific things that won't affect first possession.
+
+		AbilitySystemComponent->SetTagMapCount(DeadTag, 0);
+
+		// This is only necessary for *Respawn*.
+		AttributeSetBase->SetHealth(AttributeSetBase->GetMaxHealth());
+		AttributeSetBase->SetLevel(AttributeSetBase->GetLevel());
+		// End respawn specific things
+
+		AddStartupEffects();
+		AddCharacterAbilities();
+	}
+}
+
+void AMountainCharacter::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
+	if (PS)
+	{
+		AbilitySystemComponent = PS->AbilitySystemComponent;
+		AttributeSetBase = PS->AttributeSetBase;
+
+		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+
+		
+		BindASCInput();
+
+		// If we handle players disconnecting and rejoining in the future, we'll have to change this so that posession from rejoining doesn't reset attributes.
+		// For now assume possession = spawn/respawn.
+		InitializeAttributes();
+
+
+		// Respawn specific things that won't affect first possession.
+
+		AbilitySystemComponent->SetTagMapCount(DeadTag, 0);
+
+		// Set Health/Mana/Stamina to their max. This is only necessary for *Respawn*.
+		AttributeSetBase->SetHealth(AttributeSetBase->GetMaxHealth());
+		AttributeSetBase->SetLevel(AttributeSetBase->GetLevel());
+	}
+}
+
+void AMountainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	BindASCInput();
 }

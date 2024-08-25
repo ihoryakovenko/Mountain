@@ -7,10 +7,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Character.h"
 #include "Kismet/KismetMathLibrary.h"
 
 #include "Characters/MountainCharacter.h"
+#include "PlayerStates/BasePlayerState.h"
+#include "GAS/BaseAbilitySystemComponent.h"
 
 DEFINE_LOG_CATEGORY(TopDownControllerLog);
 
@@ -22,19 +23,23 @@ ATopDownController::ATopDownController()
 
 void ATopDownController::Tick(float DeltaSeconds)
 {
-	if (APawn* ControlledPawn = GetPawn())
+	if (APawn* ControlledCharacter = GetPawn())
 	{
-		FVector WorldLocation;
-		FVector WorldDirection;
-		if (DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+		if (!ControlledCharacter->ActorHasTag(FName("Movement.MovementBlocked")))
 		{
-			const FVector ActorLocation = ControlledPawn->GetActorLocation();
+			// Rotates character to mouse position
+			FVector WorldLocation;
+			FVector WorldDirection;
+			if (DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+			{
+				const FVector ActorLocation = ControlledCharacter->GetActorLocation();
 
-			const float Distance = (ActorLocation.Z - WorldLocation.Z) / WorldDirection.Z;
-			const FVector IntersectionPoint = WorldLocation + (WorldDirection * Distance);
+				const float Distance = (ActorLocation.Z - WorldLocation.Z) / WorldDirection.Z;
+				const FVector IntersectionPoint = WorldLocation + (WorldDirection * Distance);
 
-			const FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(ActorLocation, IntersectionPoint);
-			ControlledPawn->SetActorRotation(FRotator(0, NewRotation.Yaw, 0));
+				const FRotator NewRotation = UKismetMathLibrary::FindLookAtRotation(ActorLocation, IntersectionPoint);
+				SetControlRotation(FRotator(0, NewRotation.Yaw, 0));
+			}
 		}
 	}
 }
@@ -42,6 +47,17 @@ void ATopDownController::Tick(float DeltaSeconds)
 void ATopDownController::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ATopDownController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
+	if (PS)
+	{
+		PS->AbilitySystemComponent->InitAbilityActorInfo(PS, InPawn);
+	}
 }
 
 void ATopDownController::SetupInputComponent()
@@ -69,9 +85,12 @@ void ATopDownController::SetupInputComponent()
 
 void ATopDownController::OnJump()
 {
-	if (ACharacter* ControlledCharacter = Cast<ACharacter>(GetPawn()))
+	if (AMountainCharacter* ControlledCharacter = Cast<AMountainCharacter>(GetPawn()))
 	{
-		ControlledCharacter->Jump();
+		if (!ControlledCharacter->ActorHasTag(MovementBlockedTag.GetTagName()))
+		{
+			ControlledCharacter->Jump();
+		}
 	}
 	else
 	{
@@ -81,13 +100,16 @@ void ATopDownController::OnJump()
 
 void ATopDownController::OnMove(const FInputActionValue& Value)
 {
-	if (APawn* ControlledPawn = GetPawn())
+	if (AMountainCharacter* ControlledCharacter = Cast<AMountainCharacter>(GetPawn()))
 	{
-		const FVector2D Direction = Value.Get<FVector2D>().GetSafeNormal();
-		ControlledPawn->AddMovementInput(FVector(Direction, 0));
+		if (!ControlledCharacter->ActorHasTag(MovementBlockedTag.GetTagName()))
+		{
+			const FVector2D Direction = Value.Get<FVector2D>().GetSafeNormal();
+			ControlledCharacter->AddMovementInput(FVector(Direction, 0));
+		}
 	}
 	else
 	{
-		UE_LOG(TopDownControllerLog, Error, TEXT("'%s' ControlledPawn is nullptr"), *GetNameSafe(this));
+		UE_LOG(TopDownControllerLog, Error, TEXT("'%s' Failed to get AMountainCharacter"), *GetNameSafe(this));
 	}
 }

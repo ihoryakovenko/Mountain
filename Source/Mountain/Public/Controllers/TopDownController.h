@@ -4,6 +4,7 @@
 #include "Templates/SubclassOf.h"
 #include "GameFramework/PlayerController.h"
 #include "InputActionValue.h"
+#include "GameplayTagContainer.h"
 
 #include "TopDownController.generated.h"
 
@@ -32,9 +33,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
 
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Init")
+	FGameplayTag MovementBlockedTag;
+
 private:
-	virtual void SetupInputComponent() override;
-	virtual void BeginPlay();
+	void SetupInputComponent() override;
+	void BeginPlay() override;
+	void OnPossess(APawn* InPawn) override;
 
 	void OnJump();
 	void OnMove(const FInputActionValue& Value);

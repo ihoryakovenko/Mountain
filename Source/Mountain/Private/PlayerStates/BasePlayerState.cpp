@@ -3,6 +3,8 @@
 #include "GAS/BaseAbilitySystemComponent.h"
 #include "GAS/BaseAttributeSet.h"
 
+#include "Characters/MountainCharacter.h"
+
 DEFINE_LOG_CATEGORY(BasePlayerStateLog);
 
 ABasePlayerState::ABasePlayerState()
@@ -23,11 +25,6 @@ ABasePlayerState::ABasePlayerState()
 	DeadTag = FGameplayTag::RequestGameplayTag(FName("State.Dead"));
 }
 
-UAbilitySystemComponent* ABasePlayerState::GetAbilitySystemComponent() const
-{
-	return AbilitySystemComponent;
-}
-
 void ABasePlayerState::ShowAbilityConfirmCancelText(bool ShowText)
 { }
 
@@ -44,17 +41,26 @@ void ABasePlayerState::BeginPlay()
 	AbilitySystemComponent->RegisterGameplayTagEvent(FGameplayTag::RequestGameplayTag(FName("State.Debuff.Stun")), EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ABasePlayerState::StunTagChanged);
 }
 
-void ABasePlayerState::HealthChanged(const FOnAttributeChangeData & Data)
+void ABasePlayerState::HealthChanged(const FOnAttributeChangeData& Data)
 {
 	UE_LOG(BasePlayerStateLog, Log, TEXT("HealthChanged"));
+
+	if (Data.OldValue > 0.0f)
+	{
+		if (Data.NewValue <= 0.0f)
+		{
+			AMountainCharacter* Cahracter = Cast<AMountainCharacter>(GetPawn());
+			Cahracter->Die();
+		}
+	}
 }
 
-void ABasePlayerState::MaxHealthChanged(const FOnAttributeChangeData & Data)
+void ABasePlayerState::MaxHealthChanged(const FOnAttributeChangeData& Data)
 {
 	UE_LOG(BasePlayerStateLog, Log, TEXT("MaxHealthChanged"));
 }
 
-void ABasePlayerState::LevelChanged(const FOnAttributeChangeData & Data)
+void ABasePlayerState::LevelChanged(const FOnAttributeChangeData& Data)
 {
 	UE_LOG(BasePlayerStateLog, Log, TEXT("LevelChanged"));
 }
