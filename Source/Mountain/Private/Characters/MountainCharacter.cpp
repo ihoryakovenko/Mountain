@@ -10,6 +10,10 @@
 #include "Materials/Material.h"
 #include "Engine/World.h"
 
+// TODO:
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+
 #include "GAS/BaseGameplayAbility.h"
 #include "GAS/BaseAttributeSet.h"
 #include "PlayerStates/BasePlayerState.h"
@@ -51,9 +55,12 @@ void AMountainCharacter::RemoveCharacterAbilities()
 	TArray<FGameplayAbilitySpecHandle> AbilitiesToRemove;
 	for (const FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
 	{
-		if ((Spec.SourceObject == this) && CharacterAbilities.Contains(Spec.Ability->GetClass()))
+		for (const auto& Pair : CharacterAbilities)
 		{
-			AbilitiesToRemove.Add(Spec.Handle);
+			if ((Spec.SourceObject == this) && (Pair.Value->GetClass() == Spec.Ability->GetClass()))
+			{
+				AbilitiesToRemove.Add(Spec.Handle);
+			}
 		}
 	}
 
@@ -130,12 +137,23 @@ void AMountainCharacter::AddCharacterAbilities()
 		return;
 	}
 
-	for (TSubclassOf<UBaseGameplayAbility>& StartupAbility : CharacterAbilities)
+	for (const auto& Entry : CharacterAbilities)
 	{
+		UInputAction* InputAction = Entry.Key;
+		TSubclassOf<UBaseGameplayAbility> StartupAbility = Entry.Value;
+
+		UE_LOG(LogTemp, Warning, TEXT("Giving Abilities to AbilitySystemComponent with default values..."));
+
 		const FGameplayAbilitySpec Spec(StartupAbility, GetAbilityLevel(StartupAbility.GetDefaultObject()->AbilityID),
 			static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this);
 
-		AbilitySystemComponent->GiveAbility(Spec);
+		FGameplayAbilitySpecHandle AbilityHandle = AbilitySystemComponent->GiveAbility(Spec);
+
+		UE_LOG(LogTemp, Warning, TEXT("Ability Name: %s"), *StartupAbility.GetDefaultObject()->GetName());
+
+		// Add the InputAction and AbilityHandle to the map
+		UE_LOG(LogTemp, Warning, TEXT("Adding InputAction %s and AbilityHandle %s to Map"), *InputAction->GetName(), *AbilityHandle.ToString());
+		InputToAbilityMap.Add(InputAction, AbilityHandle);
 	}
 
 	AbilitySystemComponent->bCharacterAbilitiesGiven = true;
@@ -194,14 +212,15 @@ void AMountainCharacter::BindASCInput()
 {
 	if (!ASCInputBound && AbilitySystemComponent.IsValid() && IsValid(InputComponent))
 	{
-		// TODO: Check path
-		FTopLevelAssetPath AbilityEnumAssetPath(FName("/Script/Mountain"), FName("EAbilityInputID"));
-		//ensureAlways(AbilityEnumAssetPath.IsValid()); Bullshit checks only PackageName.IsNone() Unreal crashes if asset is not valid
+		for (const auto& Entry : InputToAbilityMap)
+		{
+			// Get the InputAction and GameplayAbility from the TMap
+			UInputAction* InputAction = Entry.Key;
+			FGameplayAbilitySpecHandle AbilityHandle = Entry.Value;
 
-		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, FGameplayAbilityInputBinds(FString("ConfirmTarget"),
-			FString("CancelTarget"), AbilityEnumAssetPath, static_cast<int32>(EAbilityInputID::Confirm), static_cast<int32>(EAbilityInputID::Cancel)));
-
-		ASCInputBound = true;
+			// Bind the ability to the input action
+			AbilitySystemComponent->SetInputBinding(InputAction, AbilityHandle);
+		}
 	}
 }
 

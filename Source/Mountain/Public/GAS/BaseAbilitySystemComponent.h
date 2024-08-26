@@ -32,6 +32,17 @@ enum class EAbilityInputID : uint8
 	Jump			UMETA(DisplayName = "Jump")
 };
 
+USTRUCT()
+struct FAbilityInputBinding
+{
+	GENERATED_BODY()
+
+	int32  InputID = 0;
+	uint32 OnPressedHandle = 0;
+	uint32 OnReleasedHandle = 0;
+	TArray<FGameplayAbilitySpecHandle> BoundAbilitiesStack;
+};
+
 UCLASS()
 class MOUNTAIN_API UBaseAbilitySystemComponent : public UAbilitySystemComponent
 {
@@ -41,7 +52,39 @@ public:
 	bool bCharacterAbilitiesGiven = false;
 	bool bStartupEffectsApplied = false;
 
+	UFUNCTION(BlueprintCallable, Category = "Enhanced Input Abilities")
+	void SetInputBinding(UInputAction* InputAction, FGameplayAbilitySpecHandle AbilityHandle);
+
+	UFUNCTION(BlueprintCallable, Category = "Enhanced Input Abilities")
+	void ClearInputBinding(FGameplayAbilitySpecHandle AbilityHandle);
+
+	UFUNCTION(BlueprintCallable, Category = "Enhanced Input Abilities")
+	void ClearAbilityBindings(UInputAction* InputAction);
+
 	FReceivedDamageDelegate ReceivedDamage;
 
-	virtual void ReceiveDamage(UBaseAbilitySystemComponent* SourceASC, float UnmitigatedDamage, float MitigatedDamage);
+	void ReceiveDamage(UBaseAbilitySystemComponent* SourceASC, float UnmitigatedDamage, float MitigatedDamage);
+	
+private:
+	virtual void OnGiveAbility(FGameplayAbilitySpec& AbilitySpec);
+
+private:
+	bool bInputComponentInitialized = false;
+
+
+	void OnAbilityInputPressed(UInputAction* InputAction);
+
+	void OnAbilityInputReleased(UInputAction* InputAction);
+
+	void RemoveEntry(UInputAction* InputAction);
+
+	void TryBindAbilityInput(UInputAction* InputAction, FAbilityInputBinding& AbilityInputBinding);
+
+	FGameplayAbilitySpec* FindAbilitySpec(FGameplayAbilitySpecHandle Handle);
+
+	UPROPERTY(transient)
+	TMap<UInputAction*, FAbilityInputBinding> MappedAbilities;
+
+	UPROPERTY(transient)
+	UEnhancedInputComponent* InputComponent;
 };

@@ -35,8 +35,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Delegates")
 	FCharacterDiedDelegate OnCharacterDied;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
-	TArray<TSubclassOf<class UBaseGameplayAbility>> CharacterAbilities;
+	// TDOD: Move UInputAction to controller?
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Abilities")
+	TMap<class UInputAction*, TSubclassOf<class UBaseGameplayAbility>> CharacterAbilities;
+
+	// TDOD: Move UInputAction to controller?
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Abilities")
+	TMap<UInputAction*, FGameplayAbilitySpecHandle> InputToAbilityMap;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
 	TSubclassOf<class UGameplayEffect> DefaultAttributes;
