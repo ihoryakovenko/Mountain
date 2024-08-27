@@ -7,6 +7,10 @@
 
 #include "GAS/BaseAbilitySystemComponent.h"
 
+// TODO: Test
+#include "AssetClasses/PlayerAbilitiesInputConfig.h"
+#include "AssetClasses/PlayerGameplayConfig.h"
+
 #include "MountainCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCharacterDiedDelegate, AMountainCharacter*, Character);
@@ -35,14 +39,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Delegates")
 	FCharacterDiedDelegate OnCharacterDied;
 
-	// TDOD: Move UInputAction to controller?
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Abilities")
-	TMap<class UInputAction*, TSubclassOf<class UBaseGameplayAbility>> CharacterAbilities;
-
-	// TDOD: Move UInputAction to controller?
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Abilities")
-	TMap<UInputAction*, FGameplayAbilitySpecHandle> InputToAbilityMap;
-
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
 	TSubclassOf<class UGameplayEffect> DefaultAttributes;
 
@@ -51,6 +47,16 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
 	TSubclassOf<class UGameplayEffect> OnDeathEffect;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Config")
+	FGameplayTag GameplayClassTag;
+
+	// TDOD: Move UInputAction to controller?
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Config")
+	TSoftObjectPtr<UPlayerAbilitiesInputConfig> InputConfig;
+
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Config")
+	TSoftObjectPtr<UPlayerGameplayConfig> GameplayConfig;
 
 private:
 	void FinishDying();
@@ -68,8 +74,14 @@ private:
 	void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override; //TODO: Check
 
 private:
+	// TDOD: Move UInputAction to controller?
+	UPROPERTY(Transient)
+	TMap<UInputAction*, FGameplayAbilitySpecHandle> InputToAbilityMap;
+
 	TWeakObjectPtr<class UBaseAbilitySystemComponent> AbilitySystemComponent;
 	TWeakObjectPtr<class UBaseAttributeSet> AttributeSetBase;
+
+	FGameClassConfig ClassConfig;
 
 	FGameplayEffectContextHandle EffectContext;
 

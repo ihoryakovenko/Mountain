@@ -55,9 +55,9 @@ void AMountainCharacter::RemoveCharacterAbilities()
 	TArray<FGameplayAbilitySpecHandle> AbilitiesToRemove;
 	for (const FGameplayAbilitySpec& Spec : AbilitySystemComponent->GetActivatableAbilities())
 	{
-		for (const auto& Pair : CharacterAbilities)
+		for (const auto& Ability : ClassConfig.ClassAbilities)
 		{
-			if ((Spec.SourceObject == this) && (Pair.Value->GetClass() == Spec.Ability->GetClass()))
+			if ((Spec.SourceObject == this) && (Ability->GetClass() == Spec.Ability->GetClass()))
 			{
 				AbilitiesToRemove.Add(Spec.Handle);
 			}
@@ -137,10 +137,24 @@ void AMountainCharacter::AddCharacterAbilities()
 		return;
 	}
 
-	for (const auto& Entry : CharacterAbilities)
+	for (const FGameClassConfig& Config : GameplayConfig->Configs)
 	{
-		UInputAction* InputAction = Entry.Key;
-		TSubclassOf<UBaseGameplayAbility> StartupAbility = Entry.Value;
+		if (Config.GameplayClassTag == GameplayClassTag)
+		{
+			ClassConfig = Config;
+		}
+	}
+
+	if (!ClassConfig.GameplayClassTag.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Cannot find class config"));
+	}
+
+
+	for (int32 i = 0; i < ClassConfig.ClassAbilities.Num(); ++i)
+	{
+		TSubclassOf<UBaseGameplayAbility> StartupAbility = ClassConfig.ClassAbilities[i];
+		UInputAction* InputAction = nullptr;
 
 		UE_LOG(LogTemp, Warning, TEXT("Giving Abilities to AbilitySystemComponent with default values..."));
 
@@ -148,6 +162,16 @@ void AMountainCharacter::AddCharacterAbilities()
 			static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this);
 
 		FGameplayAbilitySpecHandle AbilityHandle = AbilitySystemComponent->GiveAbility(Spec);
+
+		if (InputConfig->AbilityInputs.Num() > i)
+		{
+			InputAction = InputConfig->AbilityInputs[i].Get();
+		}
+		else
+		{
+			InputAction = InputConfig->EmptyAction.Get();
+			UE_LOG(LogTemp, Error, TEXT("Using empty input for %s ability"), *AbilityHandle.ToString());
+		}
 
 		UE_LOG(LogTemp, Warning, TEXT("Ability Name: %s"), *StartupAbility.GetDefaultObject()->GetName());
 
