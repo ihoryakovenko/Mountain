@@ -25,7 +25,8 @@ void ATopDownController::Tick(float DeltaSeconds)
 {
 	if (APawn* ControlledCharacter = GetPawn())
 	{
-		if (!AbilitySystemComponent->HasMatchingGameplayTag(MovementBlockedTag))
+		UAbilitySystemComponent* ASC = CastChecked<IAbilitySystemInterface>(GetPawn())->GetAbilitySystemComponent();
+		if (ASC != nullptr && !ASC->HasMatchingGameplayTag(MovementBlockedTag))
 		{
 			// Rotates character to mouse position
 			FVector WorldLocation;
@@ -56,8 +57,7 @@ void ATopDownController::OnPossess(APawn* InPawn)
 	ABasePlayerState* PS = GetPlayerState<ABasePlayerState>();
 	if (PS)
 	{
-		AbilitySystemComponent = PS->AbilitySystemComponent;
-		AbilitySystemComponent->InitAbilityActorInfo(PS, InPawn);
+		PS->AbilitySystemComponent->InitAbilityActorInfo(PS, InPawn);
 	}
 }
 
@@ -88,7 +88,8 @@ void ATopDownController::OnJump()
 {
 	if (AMountainCharacter* ControlledCharacter = Cast<AMountainCharacter>(GetPawn()))
 	{
-		if (!AbilitySystemComponent->HasMatchingGameplayTag(MovementBlockedTag))
+		UAbilitySystemComponent* ASC = ControlledCharacter->GetAbilitySystemComponent();
+		if (ASC != nullptr && !ASC->HasMatchingGameplayTag(MovementBlockedTag))
 		{
 			ControlledCharacter->Jump();
 		}
@@ -103,7 +104,8 @@ void ATopDownController::OnMove(const FInputActionValue& Value)
 {
 	if (AMountainCharacter* ControlledCharacter = Cast<AMountainCharacter>(GetPawn()))
 	{
-		if (!AbilitySystemComponent->HasMatchingGameplayTag(MovementBlockedTag))
+		UAbilitySystemComponent* ASC = ControlledCharacter->GetAbilitySystemComponent();
+		if (ASC != nullptr && !ASC->HasMatchingGameplayTag(MovementBlockedTag))
 		{
 			const FVector2D Direction = Value.Get<FVector2D>().GetSafeNormal();
 			ControlledCharacter->AddMovementInput(FVector(Direction, 0));

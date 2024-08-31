@@ -137,6 +137,9 @@ void AMountainCharacter::AddCharacterAbilities()
 		return;
 	}
 
+	InputConfig.LoadSynchronous();
+	GameplayConfig.LoadSynchronous();
+
 	for (const FGameClassConfig& Config : GameplayConfig->Configs)
 	{
 		if (Config.GameplayClassTag == GameplayClassTag)

@@ -43,9 +43,6 @@ private:
 
 	void OnJump();
 	void OnMove(const FInputActionValue& Value);
-
-private:
-	TWeakObjectPtr<class UBaseAbilitySystemComponent> AbilitySystemComponent;
 };
 
 
