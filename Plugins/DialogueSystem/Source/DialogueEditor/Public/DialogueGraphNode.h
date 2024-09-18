@@ -3,36 +3,36 @@
 #include "EdGraph/EdGraphNode.h"
 #include "DialogueGraphNodeBase.h"
 #include "DialogueNodeInfo.h"
+
 #include "DialogueGraphNode.generated.h"
 
 UCLASS()
-class UDialogueGraphNode : public UDialogueGraphNodeBase {
-    GENERATED_BODY()
+class UDialogueGraphNode : public UDialogueGraphNodeBase
+{
+	GENERATED_BODY()
 
-public: // UEdGraphNode interface
-    virtual FText GetNodeTitle(ENodeTitleType::Type titalType) const override;
-    virtual FLinearColor GetNodeTitleColor() const override { return FLinearColor(FColor::Green); }
-    virtual bool CanUserDeleteNode() const override { return true; }
-    virtual void GetNodeContextMenuActions(class UToolMenu* menu, class UGraphNodeContextMenuContext* context) const override;
+public:
+	FText GetNodeTitle(ENodeTitleType::Type Type) const override;
+	FLinearColor GetNodeTitleColor() const override;
+	bool CanUserDeleteNode() const override;
+	void GetNodeContextMenuActions(class UToolMenu* menu, class UGraphNodeContextMenuContext* Context) const override;
 
-public: // UDialogueGraphNodeBase interface
-    virtual UEdGraphPin* CreateDialoguePin(EEdGraphPinDirection direction, FName name) override;
-    virtual UEdGraphPin* CreateDefaultInputPin() override;
-    virtual void CreateDefaultOutputPins() override;
+	UEdGraphPin* CreateDialoguePin(EEdGraphPinDirection Direction, FName Name) override;
+	UEdGraphPin* CreateDefaultInputPin() override;
+	void CreateDefaultOutputPins() override;
 
-    virtual EDialogueNodeType GetDialogueNodeType() const override { return EDialogueNodeType::Dialogue; }
+	EDialogueNodeType GetDialogueNodeType() const override;
 
-    virtual void OnPropertiesChanged() { SyncPinsWithResponses(); }
+	void OnPropertiesChanged();
 
-public: // Our interface
-    void SyncPinsWithResponses();
+	void SyncPinsWithResponses();
 
-    virtual void InitNodeInfo(UObject* outer) { _nodeInfo = NewObject<UDialogueNodeInfo>(outer); }
-    virtual void SetNodeInfo(UDialogueNodeInfoBase* nodeInfo) override { _nodeInfo = Cast<UDialogueNodeInfo>(nodeInfo); }
-    virtual UDialogueNodeInfoBase* GetNodeInfo() const override { return _nodeInfo; }
-    UDialogueNodeInfo* GetDialogueNodeInfo() { return _nodeInfo; }
+	void InitNodeInfo(UObject* inInfo);
+	void SetNodeInfo(UDialogueNodeInfoBase* inInfo) override;
+	UDialogueNodeInfoBase* GetNodeInfo() const override;
+	UDialogueNodeInfo* GetDialogueNodeInfo();
 
-protected:
-    UPROPERTY()
-    class UDialogueNodeInfo* _nodeInfo;
+private:
+	UPROPERTY()
+	UDialogueNodeInfo* Info;
 };

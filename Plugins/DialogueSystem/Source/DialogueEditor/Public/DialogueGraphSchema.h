@@ -2,29 +2,32 @@
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraph.h"
+
 #include "DialogueGraphSchema.generated.h"
 
 UCLASS()
-class UDialogueGraphSchema : public UEdGraphSchema {
-    GENERATED_BODY()
+class UDialogueGraphSchema : public UEdGraphSchema
+{
+	GENERATED_BODY()
 
 public:
-    virtual void GetGraphContextActions(FGraphContextMenuBuilder& contextMenuBuilder) const override;
-    virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* a, const UEdGraphPin* b) const override;
-	virtual void CreateDefaultNodesForGraph(UEdGraph& graph) const override;
+	void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
+	const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* PinA, const UEdGraphPin* PinB) const override;
+	void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
 };
 
 USTRUCT()
-struct FNewNodeAction : public FEdGraphSchemaAction {
-    GENERATED_BODY()
+struct FNewNodeAction : public FEdGraphSchemaAction
+{
+	GENERATED_BODY()
 
 public:
-    FNewNodeAction() {}
-    FNewNodeAction(UClass* classTemplate, FText inNodeCategory, FText inMenuDesc, FText inToolTip, const int32 inGrouping)
-        : FEdGraphSchemaAction(inNodeCategory, inMenuDesc, inToolTip, inGrouping), _classTemplate(classTemplate) {}
+	FNewNodeAction() {}
+	FNewNodeAction(UClass* ClassTemplate, FText inNodeCategory, FText inMenuDesc, FText inToolTip, const int32 inGrouping)
+		: FEdGraphSchemaAction(inNodeCategory, inMenuDesc, inToolTip, inGrouping), ClassTemplate(ClassTemplate) { }
 
-    virtual UEdGraphNode* PerformAction(UEdGraph* parentGraph, UEdGraphPin* fromPin, const FVector2D location, bool bSelectNewNode = true);
+	UEdGraphNode* PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 
-protected:
-    UClass* _classTemplate;
+private:
+	UClass* ClassTemplate;
 };

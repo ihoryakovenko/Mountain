@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "UObject/NameTypes.h"
 #include "DialogueNodeInfo.h"
-#include "DialogueNodeType.h"
 
 #include "DialogueGraph.generated.h"
 

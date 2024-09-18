@@ -17,176 +17,177 @@
 
 FDialogueAssetAction::FDialogueAssetAction(EAssetTypeCategories::Type Category)
 {
-    AssetCategory = Category;
+	AssetCategory = Category;
 }
 
 FText FDialogueAssetAction::GetName() const
 {
-    return NSLOCTEXT("AssetTypeActions", "AssetTypeActions_DialogueAsset", "Dialogue Asset");
+	return NSLOCTEXT("AssetTypeActions", "AssetTypeActions_DialogueAsset", "Dialogue Asset");
 }
 
 FColor FDialogueAssetAction::GetTypeColor() const
 {
-    return FColor::Orange;
+	return FColor::Orange;
 }
 
 UClass* FDialogueAssetAction::GetSupportedClass() const
 {
-    return UDialogueAsset::StaticClass();
+	return UDialogueAsset::StaticClass();
 }
 
 void FDialogueAssetAction::OpenAssetEditor(const TArray<UObject*>& inObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor)
 {
-    const EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
-    for (UObject* Object : inObjects)
-    {
-        UDialogueAsset* Asset = Cast<UDialogueAsset>(Object);
-        if (Asset != nullptr)
-        {
-            TSharedRef<DialogueEditor> Editor(new DialogueEditor());
-            Editor->InitEditor(Mode, EditWithinLevelEditor, Asset);
-        }
-    }
+	const EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
+	for (UObject* Object : inObjects)
+	{
+		UDialogueAsset* Asset = Cast<UDialogueAsset>(Object);
+		if (Asset != nullptr)
+		{
+			TSharedRef<DialogueEditor> Editor(new DialogueEditor());
+			Editor->InitEditor(Mode, EditWithinLevelEditor, Asset);
+		}
+	}
 }
 
 uint32 FDialogueAssetAction::GetCategories()
 {
-    return AssetCategory;
+	return AssetCategory;
 }
 
-DialogueAssetApplicationMode::DialogueAssetApplicationMode(TSharedPtr<DialogueEditor> inApp) : FApplicationMode(TEXT("DialogueAssetAppMode"))
+DialogueAssetApplicationMode::DialogueAssetApplicationMode(TSharedPtr<DialogueEditor> inApp) :
+	FApplicationMode(TEXT("DialogueAssetApplicationMode"))
 {
-    Application = inApp;
-    Tabs.RegisterFactory(MakeShareable(new DialogueAssetPrimaryTabFactory(inApp)));
-    Tabs.RegisterFactory(MakeShareable(new DialogueAssetPropertiesTabFactory(inApp)));
+	Application = inApp;
+	Tabs.RegisterFactory(MakeShareable(new DialogueAssetPrimaryTabFactory(inApp)));
+	Tabs.RegisterFactory(MakeShareable(new DialogueAssetPropertiesTabFactory(inApp)));
 
-    TabLayout = FTabManager::NewLayout("DialogueAssetAppMode_Layout_v1")
-        ->AddArea
-        (
-            FTabManager::NewPrimaryArea()
-            ->SetOrientation(Orient_Vertical)
-            ->Split
-            (
-                FTabManager::NewSplitter()
-                ->SetOrientation(Orient_Horizontal)
-                ->Split
-                (
-                    FTabManager::NewStack()
-                    ->SetSizeCoefficient(0.75)
-                    ->AddTab(FName(TEXT("DialogueAssetPrimaryTab")), ETabState::OpenedTab)
-                )
-                ->Split
-                (
-                    FTabManager::NewStack()
-                    ->SetSizeCoefficient(0.25)
-                    ->AddTab(FName(TEXT("DialogueAssetPropertiesTab")), ETabState::OpenedTab)
-                )
-            )
-        );
+	TabLayout = FTabManager::NewLayout("DialogueAssetApplicationMode_Layout_v1")
+		->AddArea
+		(
+			FTabManager::NewPrimaryArea()
+			->SetOrientation(Orient_Vertical)
+			->Split
+			(
+				FTabManager::NewSplitter()
+				->SetOrientation(Orient_Horizontal)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.75)
+					->AddTab(FName(TEXT("DialogueAssetPrimaryTab")), ETabState::OpenedTab)
+				)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.25)
+					->AddTab(FName(TEXT("DialogueAssetPropertiesTab")), ETabState::OpenedTab)
+				)
+			)
+		);
 }
 
-void DialogueAssetApplicationMode::RegisterTabFactories(TSharedPtr<class FTabManager> InTabManager)
+void DialogueAssetApplicationMode::RegisterTabFactories(TSharedPtr<class FTabManager> inTabManager)
 {
-    TSharedPtr<DialogueEditor> EditorApp = Application.Pin();
-    EditorApp->PushTabFactories(Tabs);
-    FApplicationMode::RegisterTabFactories(InTabManager);
+	TSharedPtr<DialogueEditor> EditorApp = Application.Pin();
+	EditorApp->PushTabFactories(Tabs);
+	FApplicationMode::RegisterTabFactories(inTabManager);
 }
 
 void DialogueAssetApplicationMode::PreDeactivateMode()
 {
-    FApplicationMode::PreDeactivateMode();
+	FApplicationMode::PreDeactivateMode();
 }
 
 void DialogueAssetApplicationMode::PostActivateMode()
 {
-    FApplicationMode::PostActivateMode();
+	FApplicationMode::PostActivateMode();
 }
 
-DialogueAssetPropertiesTabFactory::DialogueAssetPropertiesTabFactory(TSharedPtr<DialogueEditor> app) : FWorkflowTabFactory(FName("DialogueAssetPropertiesTab"), app)
+DialogueAssetPropertiesTabFactory::DialogueAssetPropertiesTabFactory(TSharedPtr<DialogueEditor> InApp) : FWorkflowTabFactory(FName("DialogueAssetPropertiesTab"), InApp)
 {
-    App = app;
-    TabLabel = FText::FromString(TEXT("Properties"));
-    ViewMenuDescription = FText::FromString(TEXT("Displays the properties view for the current asset."));
-    ViewMenuTooltip = FText::FromString(TEXT("Show the properties view."));
+	App = InApp;
+	TabLabel = FText::FromString(TEXT("Properties"));
+	ViewMenuDescription = FText::FromString(TEXT("Displays the properties view for the current asset."));
+	ViewMenuTooltip = FText::FromString(TEXT("Show the properties view."));
 }
 
 TSharedRef<SWidget> DialogueAssetPropertiesTabFactory::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
-    TSharedPtr<DialogueEditor> EditorApp = App.Pin();
-    FPropertyEditorModule& propertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+	TSharedPtr<DialogueEditor> EditorApp = App.Pin();
+	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
 
-    FDetailsViewArgs DetailsViewArgs;
-    {
-        DetailsViewArgs.bAllowSearch = false;
-        DetailsViewArgs.bHideSelectionTip = true;
-        DetailsViewArgs.bLockable = false;
-        DetailsViewArgs.bSearchInitialKeyFocus = true;
-        DetailsViewArgs.bUpdatesFromSelection = false;
-        DetailsViewArgs.NotifyHook = nullptr;
-        DetailsViewArgs.bShowOptions = true;
-        DetailsViewArgs.bShowModifiedPropertiesOption = false;
-        DetailsViewArgs.bShowScrollBar = false;
-    }
+	FDetailsViewArgs DetailsViewArgs;
+	DetailsViewArgs.bAllowSearch = false;
+	DetailsViewArgs.bHideSelectionTip = true;
+	DetailsViewArgs.bLockable = false;
+	DetailsViewArgs.bSearchInitialKeyFocus = true;
+	DetailsViewArgs.bUpdatesFromSelection = false;
+	DetailsViewArgs.NotifyHook = nullptr;
+	DetailsViewArgs.bShowOptions = true;
+	DetailsViewArgs.bShowModifiedPropertiesOption = false;
+	DetailsViewArgs.bShowScrollBar = false;
 
-    TSharedPtr<IDetailsView> DetailsView = propertyEditorModule.CreateDetailView(DetailsViewArgs);
-    DetailsView->SetObject(EditorApp->GetWorkingAsset());
+	TSharedPtr<IDetailsView> DetailsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
+	DetailsView->SetObject(EditorApp->GetWorkingAsset());
 
-    TSharedPtr<IDetailsView> selectedNodeDetailsView = propertyEditorModule.CreateDetailView(DetailsViewArgs);
-    selectedNodeDetailsView->SetObject(nullptr);
-    EditorApp->SetSelectedNodeDetailView(selectedNodeDetailsView);
+	TSharedPtr<IDetailsView> SelectedNodeDetailsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
+	SelectedNodeDetailsView->SetObject(nullptr);
+	EditorApp->SetSelectedNodeDetailView(SelectedNodeDetailsView);
 
-    return SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .FillHeight(1.0f)
-        .HAlign(HAlign_Fill)
-        [
-            DetailsView.ToSharedRef()
-        ]
-        + SVerticalBox::Slot()
-        .FillHeight(1.0f)
-        .HAlign(HAlign_Fill)
-        [
-            selectedNodeDetailsView.ToSharedRef()
-        ];
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.HAlign(HAlign_Fill)
+		[
+			DetailsView.ToSharedRef()
+		]
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.HAlign(HAlign_Fill)
+		[
+			SelectedNodeDetailsView.ToSharedRef()
+		];
 }
 
 FText DialogueAssetPropertiesTabFactory::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
 {
-    return FText::FromString(TEXT("A properties view for the current asset."));
+	return FText::FromString(TEXT("A properties view for the current asset."));
 }
 
-DialogueAssetPrimaryTabFactory::DialogueAssetPrimaryTabFactory(TSharedPtr<DialogueEditor> InApp) : FWorkflowTabFactory(FName("DialogueAssetPrimaryTab"), InApp)
+DialogueAssetPrimaryTabFactory::DialogueAssetPrimaryTabFactory(TSharedPtr<DialogueEditor> InApp) :
+	FWorkflowTabFactory(FName("DialogueAssetPrimaryTab"), InApp)
 {
-    App = InApp;
-    TabLabel = FText::FromString(TEXT("Primary"));
-    ViewMenuDescription = FText::FromString(TEXT("Displays a primary view for whatever you want to do."));
-    ViewMenuTooltip = FText::FromString(TEXT("Show the primary view."));
+	App = InApp;
+	TabLabel = FText::FromString(TEXT("Primary"));
+	ViewMenuDescription = FText::FromString(TEXT("Displays a primary view for whatever you want to do."));
+	ViewMenuTooltip = FText::FromString(TEXT("Show the primary view."));
 }
 
 TSharedRef<SWidget> DialogueAssetPrimaryTabFactory::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
-    TSharedPtr<DialogueEditor> EditorApp = App.Pin();
+	TSharedPtr<DialogueEditor> EditorApp = App.Pin();
 
-    SGraphEditor::FGraphEditorEvents GraphEvents;
-    GraphEvents.OnSelectionChanged.BindRaw(EditorApp.Get(), &DialogueEditor::OnGraphSelectionChanged);
+	SGraphEditor::FGraphEditorEvents GraphEvents;
+	GraphEvents.OnSelectionChanged.BindRaw(EditorApp.Get(), &DialogueEditor::OnGraphSelectionChanged);
 
-    TSharedPtr<SGraphEditor> GraphEditor =
-        SNew(SGraphEditor)
-        .IsEditable(true)
-        .GraphEvents(GraphEvents)
-        .GraphToEdit(EditorApp->GetWorkingGraph());
-    EditorApp->SetWorkingGraphUi(GraphEditor);
+	TSharedPtr<SGraphEditor> GraphEditor =
+		SNew(SGraphEditor)
+		.IsEditable(true)
+		.GraphEvents(GraphEvents)
+		.GraphToEdit(EditorApp->GetWorkingGraph());
 
-    return SNew(SVerticalBox)
-        + SVerticalBox::Slot()
-        .FillHeight(1.0f)
-        .HAlign(HAlign_Fill)
-        [
-            GraphEditor.ToSharedRef()
-        ];
+	EditorApp->SetWorkingGraphUi(GraphEditor);
+
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.HAlign(HAlign_Fill)
+		[
+			GraphEditor.ToSharedRef()
+		];
 }
 
 FText DialogueAssetPrimaryTabFactory::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
 {
-    return FText::FromString(TEXT("A primary view for doing primary things."));
+	return FText::FromString(TEXT("A primary view for doing primary things."));
 }

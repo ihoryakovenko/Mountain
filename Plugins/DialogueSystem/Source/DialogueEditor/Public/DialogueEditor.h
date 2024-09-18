@@ -4,42 +4,47 @@
 #include "SGraphPanel.h"
 #include "WorkflowOrientedApp/WorkflowCentricApplication.h"
 
-class DialogueEditor : public FWorkflowCentricApplication, public FEditorUndoClient, public FNotifyHook {
+class FTabManager;
+class IToolkitHost;
+class UDialogueAsset;
+class UEdGraph;
+class IDetailsView;
+class UDialogueGraphNodeBase;
+
+class DialogueEditor : public FWorkflowCentricApplication, public FEditorUndoClient, public FNotifyHook
+{
 public:
-    virtual void RegisterTabSpawners(const TSharedRef<class FTabManager>& TabManager) override;
-	void InitEditor(const EToolkitMode::Type mode, const TSharedPtr<class IToolkitHost>& initToolkitHost, UObject* inObject);
+	void RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager) override;
+	void InitEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UObject* inObject);
 
-    class UDialogueAsset* GetWorkingAsset() { return _workingAsset; }
-    class UEdGraph* GetWorkingGraph() { return _workingGraph; }
+	FName GetToolkitFName() const override;
+	FText GetBaseToolkitName() const override;
+	FString GetWorldCentricTabPrefix() const override;
+	FLinearColor GetWorldCentricTabColorScale() const override;
 
-    void SetWorkingGraphUi(TSharedPtr<SGraphEditor> workingGraphUi) { _workingGraphUi = workingGraphUi; }
-    void SetSelectedNodeDetailView(TSharedPtr<class IDetailsView> detailsView);
-    void OnGraphSelectionChanged(const FGraphPanelSelectionSet& selection);
+	UDialogueAsset* GetWorkingAsset();
+	UEdGraph* GetWorkingGraph();
 
-public:
-    virtual FName GetToolkitFName() const override { return FName(TEXT("DialogueEditorApp")); }
-    virtual FText GetBaseToolkitName() const override { return FText::FromString(TEXT("DialogueEditorApp")); }
-    virtual FString GetWorldCentricTabPrefix() const override { return TEXT("DialogueEditorApp"); }
-    virtual FLinearColor GetWorldCentricTabColorScale() const override { return FLinearColor(0.3f, 0.2f, 0.5f, 0.5f); }
-	virtual void OnToolkitHostingStarted(const TSharedRef<class IToolkit>& Toolkit) override { }
-	virtual void OnToolkitHostingFinished(const TSharedRef<class IToolkit>& Toolkit) override { }
+	void SetWorkingGraphUi(TSharedPtr<SGraphEditor> WorkingGraphUi);
+	void SetSelectedNodeDetailView(TSharedPtr<IDetailsView> DetailsView);
+	void OnGraphSelectionChanged(const FGraphPanelSelectionSet& Selection);
 
-    virtual void OnClose() override;
-    void OnNodeDetailViewPropertiesUpdated(const FPropertyChangedEvent& event);
-    void OnWorkingAssetPreSave();
-
-protected:
-    void UpdateWorkingAssetFromGraph();
-    void UpdateEditorGraphFromWorkingAsset();
-    class UDialogueGraphNodeBase* GetSelectedNode(const FGraphPanelSelectionSet& selection);
+	void OnClose() override;
+	void OnNodeDetailViewPropertiesUpdated(const FPropertyChangedEvent& Event);
+	void OnWorkingAssetPreSave();
 
 private:
-    UPROPERTY()
-    class UDialogueAsset* _workingAsset;
+	void UpdateWorkingAssetFromGraph();
+	void UpdateEditorGraphFromWorkingAsset();
+	UDialogueGraphNodeBase* GetSelectedNode(const FGraphPanelSelectionSet& selection);
 
-    UPROPERTY()
-    class UEdGraph* _workingGraph;
+private:
+	UPROPERTY()
+	UDialogueAsset* WorkingAsset;
 
-    TSharedPtr<SGraphEditor> _workingGraphUi;
-    TSharedPtr<class IDetailsView> _selectedNodeDetailView;
+	UPROPERTY()
+	UEdGraph* WorkingGraph;
+
+	TSharedPtr<SGraphEditor> WorkingGraphUi;
+	TSharedPtr<IDetailsView> SelectedNodeDetailView;
 };

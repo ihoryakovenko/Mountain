@@ -6,11 +6,11 @@
 UCLASS()
 class UDialogueAssetFactory : public UFactory
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
-    UDialogueAssetFactory(const FObjectInitializer& InObjectInitializer);
+	UDialogueAssetFactory(const FObjectInitializer& InObjectInitializer);
 
-    UObject* FactoryCreateNew(UClass* inUclass, UObject* inParent, FName inName, EObjectFlags inFlags, UObject* inContext, FFeedbackContext* inWarn) override;
-    bool CanCreateNew() const override;
+	UObject* FactoryCreateNew(UClass* inUclass, UObject* inParent, FName inName, EObjectFlags inFlags, UObject* inContext, FFeedbackContext* inWarn) override;
+	bool CanCreateNew() const override;
 };

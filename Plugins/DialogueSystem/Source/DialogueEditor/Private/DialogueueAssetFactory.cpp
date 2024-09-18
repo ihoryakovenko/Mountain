@@ -13,5 +13,5 @@ UObject* UDialogueAssetFactory::FactoryCreateNew(UClass* inUclass, UObject* inPa
 
 bool UDialogueAssetFactory::CanCreateNew() const
 {
-    return true;
+	return true;
 }
