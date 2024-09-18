@@ -42,7 +42,7 @@ void DialogueEditor::InitEditor(const EToolkitMode::Type mode, const TSharedPtr<
 		objectsToEdit);
 
 	// Add our modes (just one for this example)
-	AddApplicationMode(TEXT("DialogueAssetAppMode"), MakeShareable(new DialogueAssetAppMode(SharedThis(this))));
+	AddApplicationMode(TEXT("DialogueAssetAppMode"), MakeShareable(new DialogueAssetApplicationMode(SharedThis(this))));
 
 	// Set the mode
 	SetCurrentMode(TEXT("DialogueAssetAppMode"));

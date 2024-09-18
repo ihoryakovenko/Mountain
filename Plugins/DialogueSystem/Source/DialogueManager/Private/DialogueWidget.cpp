@@ -1,76 +1,85 @@
 #include "DialogueWidget.h"
 
-#include "DialogueGraph.h"
-#include "DialogueAsset.h"
-#include "DialogueNodeType.h"
+#include "DialogueWidgetViewData.h"
 
 DEFINE_LOG_CATEGORY(DialogueWidget);
 
-void UDialogueWidget::StartDialogue(UDialogueAsset* Asset)
+void UDialogueWidget::SetViewData(const UDialogueOptionViewData* ViewData)
 {
-	UDialogueGraph* Graph = Asset->Graph;
-	if (Graph->Nodes.Num() < 0 && Graph->Nodes[0]->Type != EDialogueNodeType::Start)
+	DialogueOptions->ClearListItems();
+
+	DialogueText->SetText(ViewData->MainText);
+	ModeSwitcher->SetActiveWidgetIndex(0);
+
+	for (UDialogueResponseViewData* ResponseData : ViewData->Responses)
 	{
-		UE_LOG(DialogueWidget, Error, TEXT("Invalid asset or start node %s"), *Asset->GetName());
-		return;
+		DialogueOptions->AddItem(ResponseData);
 	}
 
-	ActiveNode = Graph->Nodes[0];
+	DialogueOptions->RequestRefresh();
 }
 
 void UDialogueWidget::SelectDialogueOption(int Index)
 {
-	check(Index > 0 && ActiveNode != nullptr);
+	
+}
 
-	if (Index >= ActiveNode->OutputPins.Num())
+void UDialogueWidget::OnContinueButtonPressed()
+{
+	ModeSwitcher->SetActiveWidgetIndex(1);
+}
+
+void UDialogueWidget::OnDialogueStateChanged(EDialogueState NewState)
+{
+	switch (NewState)
 	{
-		UE_LOG(DialogueWidget, Error, TEXT("Invalid dialogue option %d"), Index);
-		return;
+		case EDialogueState::Started:
+			SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+			break;
+		case EDialogueState::Ongoing:
+			break;
+		case EDialogueState::Finished:
+			SetVisibility(ESlateVisibility::Collapsed);
+			break;
 	}
+}
 
-    UDialoguePin* OutputPin = ActiveNode->OutputPins[Index];
-    if (OutputPin->Connection != nullptr)
-    {
-        ActiveNode = OutputPin->Connection->Parent;
-    }
-    else
-    {
-        ActiveNode = nullptr;
-    }
+void UDialogueWidget::NativeConstruct()
+{
+	SetVisibility(ESlateVisibility::Collapsed);
 
-    if (ActiveNode != nullptr && ActiveNode->Type == EDialogueNodeType::Dialogue)
-    {
-        UDialogueNodeInfo* Info = Cast<UDialogueNodeInfo>(ActiveNode->Info);
-        Info->DialogueText;
+	ContinueButton->OnClicked.AddDynamic(this, &UDialogueWidget::OnContinueButtonPressed);
 
-        DialogueOptions->ClearListItems();
+	// TODO: Test!
+	TestAsset.LoadSynchronous();
+	UDialogueSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UDialogueSubsystem>(GetOwningLocalPlayer());
+	Subsystem->DialogueOptionSelected.AddUObject(this, &UDialogueWidget::SetViewData);
+	Subsystem->DialogueStateChanged.AddUObject(this, &UDialogueWidget::OnDialogueStateChanged);
 
-        for (int OptionIndex = 0; OptionIndex < Info->DialogueOptions.Num(); ++OptionIndex)
-        {
-            // DOTO: Check the performance impact of using CreateWidget
-            if (UDialogueOptionEntryWidget* Entry = CreateWidget<UDialogueOptionEntryWidget>(this, UDialogueOptionEntryWidget::StaticClass()))
-            {
-                Entry->Init(OptionIndex, Info->DialogueOptions[OptionIndex]);
-                DialogueOptions->AddItem(Entry);
-            }
-
-            GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("int OptionIndex = 0; OptionIndex < Info->DialogueOptions.Num(); ++OptionIndex"));
-        }
-    }
-    else if (ActiveNode == nullptr || ActiveNode->Type == EDialogueNodeType::End)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("ActiveNode == nullptr || ActiveNode->Type == EDialogueNodeType::End"));
-    }
+	Subsystem->InitiateDialogue(TestAsset.Get());
 }
 
 void UDialogueOptionEntryWidget::Init(int Index, const FText& Text)
 {
     OptionIndex = Index;
-    ButtonText->SetText(Text);
+	ResponseText->SetText(Text);
+	IndexText->SetText(FText::AsNumber(Index + 1)); // TODO: support localization
     DialogueButton->OnClicked.AddDynamic(this, &UDialogueOptionEntryWidget::OnDialogueButtonClicked);
 }
 
 void UDialogueOptionEntryWidget::OnDialogueButtonClicked()
 {
+	// TODO: Test!
+	UDialogueSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UDialogueSubsystem>(GetOwningLocalPlayer());
+	Subsystem->SelectDialogueOption(OptionIndex);
+}
 
+void UDialogueOptionEntryWidget::NativeOnListItemObjectSet(UObject* ListItemObject)
+{
+	IUserObjectListEntry::NativeOnListItemObjectSet(ListItemObject);
+
+	if (UDialogueResponseViewData* ViewData = Cast<UDialogueResponseViewData>(ListItemObject))
+	{
+		Init(ViewData->Index, ViewData->Text);
+	}
 }

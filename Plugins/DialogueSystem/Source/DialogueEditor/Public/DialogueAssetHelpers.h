@@ -5,6 +5,9 @@
 #include "WorkflowOrientedApp/ApplicationMode.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 
+class DialogueEditor;
+class FTabManager;
+
 class FDialogueAssetAction : public FAssetTypeActions_Base
 {
 public:
@@ -20,40 +23,40 @@ private:
 	EAssetTypeCategories::Type AssetCategory;
 };
 
-class DialogueAssetAppMode : public FApplicationMode
+class DialogueAssetApplicationMode : public FApplicationMode
 {
 public:
-	DialogueAssetAppMode(TSharedPtr<class DialogueEditor> inApp);
+	DialogueAssetApplicationMode(TSharedPtr<DialogueEditor> inApp);
 
-	void RegisterTabFactories(TSharedPtr<class FTabManager> InTabManager) override;
+	void RegisterTabFactories(TSharedPtr<FTabManager> InTabManager) override;
 	void PreDeactivateMode() override;
 	void PostActivateMode() override;
 
 private:
-	TWeakPtr<class DialogueEditor> App;
+	TWeakPtr<DialogueEditor> Application;
 	FWorkflowAllowedTabSet Tabs;
 };
 
 class DialogueAssetPrimaryTabFactory : public FWorkflowTabFactory
 {
 public:
-	DialogueAssetPrimaryTabFactory(TSharedPtr<class DialogueEditor> inApp);
+	DialogueAssetPrimaryTabFactory(TSharedPtr<DialogueEditor> inApp);
 
 	TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
 	FText GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const override;
 
 private:
-	TWeakPtr<class DialogueEditor> App;
+	TWeakPtr<DialogueEditor> App;
 };
 
 class DialogueAssetPropertiesTabFactory : public FWorkflowTabFactory
 {
 public:
-	DialogueAssetPropertiesTabFactory(TSharedPtr<class DialogueEditor> inApp);
+	DialogueAssetPropertiesTabFactory(TSharedPtr<DialogueEditor> inApp);
 
 	TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
 	FText GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const override;
 
 private:
-	TWeakPtr<class DialogueEditor> App;
+	TWeakPtr<DialogueEditor> App;
 };

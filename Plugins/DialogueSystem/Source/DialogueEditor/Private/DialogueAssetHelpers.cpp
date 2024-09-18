@@ -37,14 +37,14 @@ UClass* FDialogueAssetAction::GetSupportedClass() const
 
 void FDialogueAssetAction::OpenAssetEditor(const TArray<UObject*>& inObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor)
 {
-    EToolkitMode::Type mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
-    for (UObject* object : inObjects)
+    const EToolkitMode::Type Mode = EditWithinLevelEditor.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
+    for (UObject* Object : inObjects)
     {
-        UDialogueAsset* DialogueAsset = Cast<UDialogueAsset>(object);
-        if (DialogueAsset != nullptr)
+        UDialogueAsset* Asset = Cast<UDialogueAsset>(Object);
+        if (Asset != nullptr)
         {
-            TSharedRef<DialogueEditor> editor(new DialogueEditor());
-            editor->InitEditor(mode, EditWithinLevelEditor, DialogueAsset);
+            TSharedRef<DialogueEditor> Editor(new DialogueEditor());
+            Editor->InitEditor(Mode, EditWithinLevelEditor, Asset);
         }
     }
 }
@@ -54,9 +54,9 @@ uint32 FDialogueAssetAction::GetCategories()
     return AssetCategory;
 }
 
-DialogueAssetAppMode::DialogueAssetAppMode(TSharedPtr<DialogueEditor> inApp) : FApplicationMode(TEXT("DialogueAssetAppMode"))
+DialogueAssetApplicationMode::DialogueAssetApplicationMode(TSharedPtr<DialogueEditor> inApp) : FApplicationMode(TEXT("DialogueAssetAppMode"))
 {
-    App = inApp;
+    Application = inApp;
     Tabs.RegisterFactory(MakeShareable(new DialogueAssetPrimaryTabFactory(inApp)));
     Tabs.RegisterFactory(MakeShareable(new DialogueAssetPropertiesTabFactory(inApp)));
 
@@ -85,19 +85,19 @@ DialogueAssetAppMode::DialogueAssetAppMode(TSharedPtr<DialogueEditor> inApp) : F
         );
 }
 
-void DialogueAssetAppMode::RegisterTabFactories(TSharedPtr<class FTabManager> InTabManager)
+void DialogueAssetApplicationMode::RegisterTabFactories(TSharedPtr<class FTabManager> InTabManager)
 {
-    TSharedPtr<DialogueEditor> EditorApp = App.Pin();
+    TSharedPtr<DialogueEditor> EditorApp = Application.Pin();
     EditorApp->PushTabFactories(Tabs);
     FApplicationMode::RegisterTabFactories(InTabManager);
 }
 
-void DialogueAssetAppMode::PreDeactivateMode()
+void DialogueAssetApplicationMode::PreDeactivateMode()
 {
     FApplicationMode::PreDeactivateMode();
 }
 
-void DialogueAssetAppMode::PostActivateMode()
+void DialogueAssetApplicationMode::PostActivateMode()
 {
     FApplicationMode::PostActivateMode();
 }
