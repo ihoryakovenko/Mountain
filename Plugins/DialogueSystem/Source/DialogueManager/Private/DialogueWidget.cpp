@@ -1,8 +1,16 @@
 #include "DialogueWidget.h"
 
 #include "DialogueWidgetViewData.h"
+#include "DialogueSubsystem.h"
 
 DEFINE_LOG_CATEGORY(DialogueWidget);
+
+void UDialogueWidget::NativeConstruct()
+{
+	DialogueOptions->SetSelectionMode(ESelectionMode::Single);
+
+	DialogueOptions->OnItemSelectionChanged().AddUObject(this, &UDialogueWidget::OnDialogueOptionSelected);
+}
 
 void UDialogueWidget::SetViewData(const UDialogueOptionViewData* ViewData)
 {
@@ -16,60 +24,87 @@ void UDialogueWidget::SetViewData(const UDialogueOptionViewData* ViewData)
 		DialogueOptions->AddItem(ResponseData);
 	}
 
-	DialogueOptions->RequestRefresh();
-}
-
-void UDialogueWidget::SelectDialogueOption(int Index)
-{
-	
+	SetFocus();
 }
 
 void UDialogueWidget::OnContinueButtonPressed()
 {
 	ModeSwitcher->SetActiveWidgetIndex(1);
+
+	DialogueOptions->SetFocus();
+	DialogueOptions->SetKeyboardFocus();
 }
 
-void UDialogueWidget::OnDialogueStateChanged(EDialogueState NewState)
+FReply UDialogueWidget::NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent)
 {
-	switch (NewState)
+	Super::NativeOnFocusReceived(InGeometry, InFocusEvent);
+	return FReply::Handled();
+}
+
+void UDialogueWidget::OnDialogueOptionSelected(UObject* SelectedItem)
+{
+	//UE_LOG(LogTemp, Warning, TEXT("OnDialogueOptionSelected"));
+	//if (UDialogueOptionEntryWidget* Entry = Cast<UDialogueOptionEntryWidget>(SelectedItem))
+	//{
+	//	UE_LOG(LogTemp, Warning, TEXT("OnDialogueOptionSelected cast"));
+	//}
+}
+
+FReply UDialogueWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	if (InMouseEvent.GetEffectingButton() == EKeys::LeftMouseButton)
 	{
-		case EDialogueState::Started:
-			SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-			break;
-		case EDialogueState::Ongoing:
-			break;
-		case EDialogueState::Finished:
-			SetVisibility(ESlateVisibility::Collapsed);
-			break;
+		OnContinueButtonPressed();
+		return FReply::Handled();
 	}
+
+	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
 }
 
-void UDialogueWidget::NativeConstruct()
+FReply UDialogueWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-	SetVisibility(ESlateVisibility::Collapsed);
+	if (InKeyEvent.GetKey() == EKeys::Enter || InKeyEvent.GetKey() == EKeys::Virtual_Accept)
+	{
+		OnContinueButtonPressed();
+		return FReply::Handled();
+	}
 
-	ContinueButton->OnClicked.AddDynamic(this, &UDialogueWidget::OnContinueButtonPressed);
-
-	// TODO: Test!
-	TestAsset.LoadSynchronous();
-	UDialogueSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UDialogueSubsystem>(GetOwningLocalPlayer());
-	Subsystem->DialogueOptionSelected.AddUObject(this, &UDialogueWidget::SetViewData);
-	Subsystem->DialogueStateChanged.AddUObject(this, &UDialogueWidget::OnDialogueStateChanged);
-
-	Subsystem->InitiateDialogue(TestAsset.Get());
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
 }
 
 void UDialogueOptionEntryWidget::Init(int Index, const FText& Text)
 {
-    OptionIndex = Index;
+	// TODO: support string table
+	const FText Format = FText::Format(NSLOCTEXT("Namespace", "Key", "{0}:"), FText::AsNumber(Index + 1));
+
+	OptionIndex = Index;
 	ResponseText->SetText(Text);
-	IndexText->SetText(FText::AsNumber(Index + 1)); // TODO: support localization
-    DialogueButton->OnClicked.AddDynamic(this, &UDialogueOptionEntryWidget::OnDialogueButtonClicked);
+	IndexText->SetText(Format);
 }
 
+void UDialogueOptionEntryWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	DialogueButton->OnClicked.AddDynamic(this, &UDialogueOptionEntryWidget::OnDialogueButtonClicked);
+}
+
+void UDialogueOptionEntryWidget::NativeOnItemSelectionChanged(bool bIsSelected)
+{
+	UE_LOG(LogTemp, Warning, TEXT("NativeOnItemSelectionChanged"));
+	if (bIsSelected)
+	{
+		DialogueButton->SetFocus();
+		DialogueButton->SetButtonHovered(true);
+	}
+	else
+	{
+		DialogueButton->SetButtonHovered(false);
+	}
+}
+
+// TODO: Expose as delegate?
 void UDialogueOptionEntryWidget::OnDialogueButtonClicked()
 {
-	// TODO: Test!
 	UDialogueSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UDialogueSubsystem>(GetOwningLocalPlayer());
 	Subsystem->SelectDialogueOption(OptionIndex);
 }

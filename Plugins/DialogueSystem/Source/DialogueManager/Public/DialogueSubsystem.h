@@ -9,6 +9,7 @@ DECLARE_LOG_CATEGORY_EXTERN(DialogueSubsystem, Log, All);
 
 class UDialogueAsset;
 class UDialogueNode;
+class UDialogueOptionViewData;
 
 UENUM()
 enum class EDialogueState
@@ -19,7 +20,7 @@ enum class EDialogueState
 };
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnDialogueStateChanged, EDialogueState);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnDialogueOptionSelected, const class UDialogueOptionViewData*);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnDialogueOptionSelected, const UDialogueOptionViewData*);
 
 UCLASS()
 class DIALOGUEMANAGER_API UDialogueSubsystem : public ULocalPlayerSubsystem
@@ -27,7 +28,9 @@ class DIALOGUEMANAGER_API UDialogueSubsystem : public ULocalPlayerSubsystem
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION(BlueprintCallable, Category = "Interface")
 	void InitiateDialogue(UDialogueAsset* Asset);
+	UFUNCTION(BlueprintCallable, Category = "Interface")
 	void FinishDialogue();
 
 	void SelectDialogueOption(int Index);

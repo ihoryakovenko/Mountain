@@ -8,6 +8,9 @@ public class DialogueManager : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-        	PublicDependencyModuleNames.AddRange(new string[] { "Projects", "Core", "CoreUObject", "Engine", "InputCore", "GameplayTags", "UMG" });
-	}
+        PublicDependencyModuleNames.AddRange(new string[] { "Projects", "Core", "CoreUObject",
+				"Engine", "InputCore", "GameplayTags", "UMG", });
+
+        PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+    }
 }
