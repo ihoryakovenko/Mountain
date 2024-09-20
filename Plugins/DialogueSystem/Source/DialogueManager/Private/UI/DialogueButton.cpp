@@ -1,10 +1,19 @@
-#include "DialogueButton.h"
+#include "UI/DialogueButton.h"
 
 #include "Components/ButtonSlot.h"
 
 void SDialogueButton::SetButtonHovered(bool IsHover)
 {
-	SetHover(IsHover);
+	if (IsHover)
+	{
+		SetHover(true);
+	}
+	else
+	{
+		SetHover(false);
+		TAttribute<bool> InHovered;
+		SetHover(InHovered);
+	}
 }
 
 void UDialogueButton::SetButtonHovered(bool IsHovered)

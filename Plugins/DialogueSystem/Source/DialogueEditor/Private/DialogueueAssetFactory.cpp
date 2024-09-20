@@ -1,4 +1,5 @@
 #include "DialogueAssetFactory.h"
+
 #include "DialogueAsset.h"
 
 UDialogueAssetFactory::UDialogueAssetFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)

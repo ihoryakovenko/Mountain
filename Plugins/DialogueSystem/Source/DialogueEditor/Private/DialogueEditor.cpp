@@ -6,8 +6,6 @@
 #include "DialogueAssetHelpers.h"
 #include "DialogueGraphSchema.h"
 #include "DialogueGraphNode.h"
-#include "DialogueStartGraphNode.h"
-#include "DialogueEndGraphNode.h"
 #include "DialogueNodeInfo.h"
 
 DEFINE_LOG_CATEGORY_STATIC(DialogueEditorSub, Log, All);
@@ -21,9 +19,9 @@ void DialogueEditor::InitEditor(const EToolkitMode::Type Mode, const TSharedPtr<
 {
 	TArray<UObject*> ObjectsToEdit;
 	ObjectsToEdit.Add(inObject);
-	
+
 	WorkingAsset = Cast<UDialogueAsset>(inObject);
-	WorkingAsset->SetPreSaveListener([this] () { OnWorkingAssetPreSave(); });
+	WorkingAsset->PreSaveDelegate = FOnPreSaveDelegate::CreateRaw(this, &DialogueEditor::OnWorkingAssetPreSave);
 
 	WorkingGraph = FBlueprintEditorUtils::CreateNewGraph(WorkingAsset, NAME_None, UEdGraph::StaticClass(), UDialogueGraphSchema::StaticClass());
 
@@ -48,7 +46,7 @@ UEdGraph* DialogueEditor::GetWorkingGraph()
 void DialogueEditor::OnClose()
 {
 	UpdateWorkingAssetFromGraph();
-	WorkingAsset->SetPreSaveListener(nullptr);
+	WorkingAsset->PreSaveDelegate.Unbind();
 	FAssetEditorToolkit::OnClose();
 }
 

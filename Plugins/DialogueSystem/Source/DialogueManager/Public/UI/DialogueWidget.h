@@ -26,6 +26,8 @@ public:
 protected:
 	void NativeConstruct() override;
 	void NativeOnItemSelectionChanged(bool bIsSelected) override;
+	void NativeOnMouseEnter(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	void NativeOnMouseLeave(const FPointerEvent& InMouseEvent) override;
 
 public:
 	UPROPERTY(meta = (BindWidget))
@@ -55,18 +57,21 @@ public:
 	void SetViewData(const UDialogueOptionViewData* ViewData);
 
 protected:
+	void NativePreConstruct() override;
 	void NativeConstruct() override;
-	FReply NativeOnFocusReceived(const FGeometry& InGeometry, const FFocusEvent& InFocusEvent) override;
+
+	FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 
 private:
 	UFUNCTION()
 	void OnContinueButtonPressed();
 
 	UFUNCTION()
-	void OnDialogueOptionSelected(UObject* SelectedItem);
+	void OnInputDeviceChanged(const FPlatformUserId UserId, const FInputDeviceId DeviceId);
 
-	FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
-	FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+	UFUNCTION()
+	void OnDialogueStateChanged(EDialogueState NewState);
 
 public:
 	UPROPERTY(meta = (BindWidget))
@@ -77,4 +82,7 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	UListView* DialogueOptions;
+
+private:
+	bool CachedShowMouseCursor;
 };

@@ -6,22 +6,23 @@
 
 #include "DialogueAsset.generated.h"
 
+DECLARE_DELEGATE(FOnPreSaveDelegate);
+
 UCLASS(BlueprintType)
 class DIALOGUEMANAGER_API UDialogueAsset : public UObject
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
 
 public:
-    UPROPERTY(EditAnywhere)
-    FString DialogueName;
+	UPROPERTY(EditAnywhere)
+	FString DialogueName;
 
-    UPROPERTY()
-    UDialogueGraph* Graph;
+	UPROPERTY()
+	UDialogueGraph* Graph;
+
+	FOnPreSaveDelegate PreSaveDelegate;
 
 public:
-    void SetPreSaveListener(std::function<void()> onPreSaveListener) { _onPreSaveListener = onPreSaveListener; }
-    void PreSave(FObjectPreSaveContext saveContext) override;
-
-private:
-    std::function<void()> _onPreSaveListener = nullptr;
+	void PreSave(FObjectPreSaveContext SaveContext) override;
+ 
 };

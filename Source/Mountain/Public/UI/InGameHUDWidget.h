@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 
-#include "DialogueWidget.h"
+#include "UI/DialogueWidget.h"
 
 #include "InGameHUDWidget.generated.h"
 
@@ -15,13 +15,7 @@ class UInGameHUDWidget : public UUserWidget
 private:
 	void NativeConstruct() override;
 
-	UFUNCTION()
-	void OnDialogueStateChanged(EDialogueState NewState);
-
 public:
 	UPROPERTY(meta = (BindWidget))
 	UDialogueWidget* DialogueWidget;
-
-private:
-	bool CachedShowMouseCursor;
 };

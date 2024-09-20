@@ -28,6 +28,7 @@ class DIALOGUEMANAGER_API UDialogueSubsystem : public ULocalPlayerSubsystem
 	GENERATED_BODY()
 	
 public:
+	// TODO: Create dialogue repository and use gameplay tag to find and initiate dialogue
 	UFUNCTION(BlueprintCallable, Category = "Interface")
 	void InitiateDialogue(UDialogueAsset* Asset);
 	UFUNCTION(BlueprintCallable, Category = "Interface")

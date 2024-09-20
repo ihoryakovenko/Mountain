@@ -2,7 +2,7 @@
 
 #include "DialogueGraph.h"
 #include "DialogueAsset.h"
-#include "DialogueWidgetViewData.h"
+#include "UI/DialogueWidgetViewData.h"
 
 DEFINE_LOG_CATEGORY(DialogueSubsystem);
 
