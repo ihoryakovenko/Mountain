@@ -37,11 +37,20 @@ void UDialogueWidget::SetViewData(const UDialogueOptionViewData* ViewData)
 		DialogueOptions->AddItem(ResponseData);
 	}
 
+	NumResponses = ViewData->Responses.Num();
+
 	SetFocus();
 }
 
 void UDialogueWidget::OnContinueButtonPressed()
 {
+	// TODO: Fix on subsystem side
+	if (NumResponses == 0)
+	{
+		OnDialogueStateChanged(EDialogueState::Finished);
+		return;
+	}
+
 	ModeSwitcher->SetActiveWidgetIndex(1);
 
 	DialogueOptions->SetFocus();
@@ -114,7 +123,7 @@ void UDialogueWidget::OnDialogueStateChanged(EDialogueState NewState)
 
 			if (APlayerController* PlayerController = GetOwningPlayer())
 			{
-				CachedShowMouseCursor = PlayerController->bShowMouseCursor;
+				bCachedShowMouseCursor = PlayerController->bShowMouseCursor;
 				PlayerController->SetShowMouseCursor(true);
 				UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PlayerController, nullptr,
 					EMouseLockMode::DoNotLock, true);
@@ -132,7 +141,7 @@ void UDialogueWidget::OnDialogueStateChanged(EDialogueState NewState)
 
 			if (APlayerController* PlayerController = GetOwningPlayer())
 			{
-				PlayerController->SetShowMouseCursor(CachedShowMouseCursor);
+				PlayerController->SetShowMouseCursor(bCachedShowMouseCursor);
 				UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(PlayerController);
 			}
 
@@ -148,7 +157,7 @@ void UDialogueOptionEntryWidget::Init(int Index, const FText& Text)
 
 	OptionIndex = Index;
 	ResponseText->SetText(Text);
-	IndexText->SetText(Format);
+	IndexText->SetText(Format); // Support key inputs
 }
 
 void UDialogueOptionEntryWidget::NativeConstruct()

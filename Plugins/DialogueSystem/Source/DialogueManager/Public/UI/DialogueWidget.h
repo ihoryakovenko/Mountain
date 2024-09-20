@@ -84,5 +84,6 @@ public:
 	UListView* DialogueOptions;
 
 private:
-	bool CachedShowMouseCursor;
+	bool bCachedShowMouseCursor;
+	int32 NumResponses = 0;
 };
